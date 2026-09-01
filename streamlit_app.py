@@ -21,6 +21,11 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
+# Streamlit Cloud secrets are not automatically exposed as environment variables.
+for secret_name in ("GROQ_API_KEY", "LLM_PROVIDER", "GROQ_MODEL"):
+    if secret_name in st.secrets:
+        os.environ[secret_name] = str(st.secrets[secret_name])
+
 # Styling
 st.markdown("""
 <style>

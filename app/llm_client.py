@@ -1,9 +1,8 @@
 """
 LLM client abstraction.
 
-Supports OpenAI, Anthropic, or a deterministic "mock" mode so the whole
+Supports Groq, OpenAI, Anthropic, or a deterministic "mock" mode so the
 app runs and is fully testable without any API key or network access.
-This is the pattern real production systems use to keep CI cheap and fast.
 """
 import os
 from dataclasses import dataclass
@@ -74,6 +73,37 @@ class OpenAIClient(BaseLLMClient):
         return LLMResponse(text=resp.choices[0].message.content)
 
 
+class GroqClient(BaseLLMClient):
+    def __init__(self, api_key: str, model: str = "llama-3.1-8b-instant"):
+        from groq import Groq
+        self.client = Groq(api_key=api_key)
+        self.model = model
+
+    def complete(self, prompt: str, tools: list[dict] | None = None) -> LLMResponse:
+        if tools:
+            lower = prompt.lower()
+            if any(char.isdigit() for char in prompt) and ("calculate" in lower or "+" in prompt or "*" in prompt):
+                return LLMResponse(
+                    text="",
+                    tool_call={"name": "calculator", "arguments": {"expression": _extract_expression(prompt)}},
+                )
+            return LLMResponse(text="", tool_call={"name": "retriever", "arguments": {"query": prompt}})
+
+        response = self.client.chat.completions.create(
+            model=self.model,
+            messages=[
+                {
+                    "role": "system",
+                    "content": "Answer clearly using the provided context. If the context does not contain the answer, say so.",
+                },
+                {"role": "user", "content": prompt},
+            ],
+            temperature=0.2,
+            max_tokens=800,
+        )
+        return LLMResponse(text=response.choices[0].message.content or "No answer was generated.")
+
+
 class AnthropicClient(BaseLLMClient):
     def __init__(self, api_key: str, model: str = "claude-sonnet-4-6"):
         import anthropic
@@ -91,6 +121,8 @@ class AnthropicClient(BaseLLMClient):
 
 def get_llm_client() -> BaseLLMClient:
     provider = os.getenv("LLM_PROVIDER", "mock").lower()
+    if provider == "groq" and os.getenv("GROQ_API_KEY"):
+        return GroqClient(os.environ["GROQ_API_KEY"])
     if provider == "openai" and os.getenv("OPENAI_API_KEY"):
         return OpenAIClient(os.environ["OPENAI_API_KEY"])
     if provider == "anthropic" and os.getenv("ANTHROPIC_API_KEY"):

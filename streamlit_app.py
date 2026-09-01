@@ -117,9 +117,9 @@ with st.sidebar:
     st.header("⚙️ Agent Settings")
     
     max_steps = st.slider(
-        "Reasoning Steps",
+           "Maximum Tool Steps",
         min_value=1,
-        max_value=10,
+           max_value=5,
         value=3
     )
     

@@ -2,9 +2,13 @@ from app.agent import AgenticRAGAssistant
 from app.llm_client import BaseLLMClient, GroqClient, LLMResponse, MockLLMClient, get_llm_client
 
 def test_agent_answers_directly_for_plain_question():
-    agent = AgenticRAGAssistant(llm_client=MockLLMClient())
+    class DirectAnswerClient(BaseLLMClient):
+        def complete(self, prompt, tools=None):
+            return LLMResponse(text="Hello from the assistant.")
+
+    agent = AgenticRAGAssistant(llm_client=DirectAnswerClient())
     state = agent.run("hello there")
-    assert state.final_answer is not None
+    assert state.final_answer == "Hello from the assistant."
 
 def test_agent_uses_calculator_tool_for_math():
     agent = AgenticRAGAssistant(llm_client=MockLLMClient())
@@ -41,7 +45,7 @@ def test_agent_generates_answer_after_retrieval(monkeypatch):
 
     monkeypatch.setattr("app.agent.retrieve", lambda query: [{"text": "Relevant context", "source": "test"}])
     client = RetrievalThenAnswerClient()
-    state = AgenticRAGAssistant(llm_client=client).run("What is AutoGen?")
+    state = AgenticRAGAssistant(llm_client=client, max_steps=1).run("What is AutoGen?")
 
     assert state.final_answer == "A final answer based on the context."
     assert client.tools_arguments == [[{}], None]

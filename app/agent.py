@@ -46,8 +46,6 @@ class AgenticRAGAssistant:
             else:
                 state.final_answer = "unknown tool requested"
                 break
-        else:
-            state.final_answer = state.final_answer or "max steps reached without a final answer"
 
         if state.final_answer is None:
             final = self.llm.complete(prompt, tools=None)

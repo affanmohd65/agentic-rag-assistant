@@ -218,7 +218,7 @@ Audio is transcribed with Groq Whisper. Images are converted into searchable des
 
 ### Configure Agent Settings
 
-- **Max Steps**: How many reasoning steps (1-10)
+- **Max Steps**: How many reasoning steps (1-5)
 - **LLM Provider**: Ollama / Groq / Claude / GPT-4
 - **Use Cache**: Enable query caching for speed
 
@@ -229,7 +229,7 @@ Examples that work well:
 - "Calculate 999 * 0.15 for 15% discount" (math)
 - "Summarize the key points from the documents" (synthesis)
 
-Sidebar → "⚙️ Agent Settings" → Adjust "Reasoning Steps" (1-10)
+Sidebar → "⚙️ Agent Settings" → Adjust "Reasoning Steps" (1-5)
 
 ### Swap LLM Provider
 
@@ -355,16 +355,6 @@ With Groq (free tier):
 | Complex reasoning | 200-500ms | Free |
 | Cache hit | <20ms | Free |
 
-## 🎓 Interview Talking Points
-
-1. **Architecture**: "Implemented LangGraph for complex agent workflows"
-2. **Search**: "Hybrid search combining BM25 + vector + reranking for 30% better quality"
-3. **Routing**: "Cost-aware model selection between free (Groq, Ollama) and premium (Claude, GPT-4) providers"
-4. **Observability**: "Production monitoring with Langfuse and OpenTelemetry"
-5. **Evaluation**: "RAGAS metrics for RAG quality assessment"
-6. **Deployment**: "Full Docker stack + GitHub Actions CI/CD + Streamlit Cloud"
-7. **Performance**: "Query caching achieving <100ms latency for cached queries"
-8. **Database**: "PostgreSQL semantic memory for persistent conversation history"
 
 ## 🤝 Contributing
 
@@ -375,9 +365,6 @@ With Groq (free tier):
 5. Commit: `git commit -m "feat: description"`
 6. Push and open PR
 
-## 📄 License
-
-MIT License - Feel free to use in your projects!
 
 ## 🔗 Related Resources
 

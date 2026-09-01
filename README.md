@@ -155,15 +155,7 @@ openai_api_key = "sk-..."
 pytest tests/
 ```
 
-## 📊 Interview Points
 
-- ✅ Agent pattern with tool-calling
-- ✅ Vector search with Chroma
-- ✅ LLM abstraction (Mock/OpenAI/Anthropic)
-- ✅ Safe expression evaluation (AST-based)
-- ✅ Production-ready Streamlit UI
-- ✅ Cloud-deployable on Streamlit Community
-- ✅ Works without API keys (MockLLM)
 
 ## 🤝 Contributing
 
@@ -186,18 +178,4 @@ docker run -p 8000:8000 agentic-rag
 pytest -v
 ```
 
-## What I'd add for a production version
 
-- Real LLM tool-calling APIs (OpenAI/Anthropic function calling) instead
-  of the mock rule-based router
-- Reranking step after retrieval
-- Conversation memory across turns
-- An evaluation harness comparing agentic vs. plain-RAG answer quality
-  on a fixed query set
-
-## Resume bullet (fill in real numbers once you've run it against real data)
-
-> Built an agentic RAG assistant in Python with tool-calling (retrieval +
-> calculator) and a step-by-step reasoning trace, using Chroma for local
-> vector search and a swappable LLM client (OpenAI/Anthropic/mock);
-> fully tested with CI on every push.

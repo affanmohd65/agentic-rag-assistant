@@ -74,7 +74,7 @@ class OpenAIClient(BaseLLMClient):
 
 
 class GroqClient(BaseLLMClient):
-    def __init__(self, api_key: str, model: str = "llama-3.1-8b-instant"):
+    def __init__(self, api_key: str, model: str = "openai/gpt-oss-20b"):
         from groq import Groq
         self.client = Groq(api_key=api_key)
         self.model = model
@@ -122,7 +122,10 @@ class AnthropicClient(BaseLLMClient):
 def get_llm_client() -> BaseLLMClient:
     provider = os.getenv("LLM_PROVIDER", "mock").lower()
     if provider == "groq" and os.getenv("GROQ_API_KEY"):
-        return GroqClient(os.environ["GROQ_API_KEY"])
+        return GroqClient(
+            os.environ["GROQ_API_KEY"],
+            model=os.getenv("GROQ_MODEL", "openai/gpt-oss-20b"),
+        )
     if provider == "openai" and os.getenv("OPENAI_API_KEY"):
         return OpenAIClient(os.environ["OPENAI_API_KEY"])
     if provider == "anthropic" and os.getenv("ANTHROPIC_API_KEY"):

@@ -15,9 +15,17 @@ def test_agent_uses_calculator_tool_for_math():
 def test_groq_provider_is_selected_when_configured(monkeypatch):
     monkeypatch.setenv("LLM_PROVIDER", "groq")
     monkeypatch.setenv("GROQ_API_KEY", "test-key")
-    monkeypatch.setattr(GroqClient, "__init__", lambda self, api_key: None)
+    monkeypatch.setenv("GROQ_MODEL", "openai/gpt-oss-120b")
+    initialized_with = {}
+
+    def fake_init(self, api_key, model):
+        initialized_with["api_key"] = api_key
+        initialized_with["model"] = model
+
+    monkeypatch.setattr(GroqClient, "__init__", fake_init)
 
     assert isinstance(get_llm_client(), GroqClient)
+    assert initialized_with == {"api_key": "test-key", "model": "openai/gpt-oss-120b"}
 
 
 def test_agent_generates_answer_after_retrieval(monkeypatch):

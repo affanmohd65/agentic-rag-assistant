@@ -1,5 +1,5 @@
 from app.agent import AgenticRAGAssistant
-from app.llm_client import GroqClient, MockLLMClient, get_llm_client
+from app.llm_client import BaseLLMClient, GroqClient, LLMResponse, MockLLMClient, get_llm_client
 
 def test_agent_answers_directly_for_plain_question():
     agent = AgenticRAGAssistant(llm_client=MockLLMClient())
@@ -18,3 +18,22 @@ def test_groq_provider_is_selected_when_configured(monkeypatch):
     monkeypatch.setattr(GroqClient, "__init__", lambda self, api_key: None)
 
     assert isinstance(get_llm_client(), GroqClient)
+
+
+def test_agent_generates_answer_after_retrieval(monkeypatch):
+    class RetrievalThenAnswerClient(BaseLLMClient):
+        def __init__(self):
+            self.tools_arguments = []
+
+        def complete(self, prompt, tools=None):
+            self.tools_arguments.append(tools)
+            if tools:
+                return LLMResponse(text="", tool_call={"name": "retriever", "arguments": {"query": prompt}})
+            return LLMResponse(text="A final answer based on the context.")
+
+    monkeypatch.setattr("app.agent.retrieve", lambda query: [{"text": "Relevant context", "source": "test"}])
+    client = RetrievalThenAnswerClient()
+    state = AgenticRAGAssistant(llm_client=client).run("What is AutoGen?")
+
+    assert state.final_answer == "A final answer based on the context."
+    assert client.tools_arguments == [[{}], None]

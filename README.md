@@ -1,103 +1,177 @@
 # 🤖 Agentic RAG Assistant
 
-A production-ready agentic RAG system with an intelligent agent that decides whether to:
-- **Answer directly** from its knowledge
-- **Calculate** mathematical expressions  
-- **Retrieve** relevant documents from a knowledge base
-
-Built with FastAPI + Streamlit + Chroma, fully testable with MockLLM (zero API keys needed).
-Demonstrates the core LangGraph-style agent pattern in ~150 lines of explainable code.
-
-**🚀 [Deploy to Streamlit Cloud](CLOUD_DEPLOYMENT.md)** - Get a public link in 5 minutes!
+An intelligent AI agent that decides whether to answer directly, calculate expressions, or retrieve documents. Built with **Streamlit + FastAPI + Chroma**, fully functional with zero API keys needed (MockLLM included).
 
 ## 🚀 Quick Start
 
-### Option A: Deploy to Cloud (Easiest)
-
-Deploy to **Streamlit Community Cloud** with a single click - your app gets a public URL anyone can access:
+### Deploy to Streamlit Cloud (1 Click)
 
 1. Push this repo to GitHub
 2. Go to [share.streamlit.io](https://share.streamlit.io)
-3. Click "New app" → select this repo → `streamlit_app.py`
-4. Done! Your app is live.
+3. Click "New app" → Select repo → Main file: `streamlit_app.py`
+4. Your app is live! ✅
 
-📖 [**Full cloud deployment guide →**](CLOUD_DEPLOYMENT.md)
-
-### Option B: Run Locally
+### Run Locally
 
 ```bash
-# Install dependencies
+# Install
 pip install -r requirements.txt
 
-# Run the Streamlit UI (all-in-one)
+# Run Streamlit UI (all-in-one)
 streamlit run streamlit_app.py
 # Visit http://localhost:8501
 ```
 
-Or use the FastAPI backend + Streamlit UI separately:
+## ✨ Features
+
+- **Agent with tool-calling**: Decides to answer directly, calculate, or retrieve documents
+- **File upload**: Upload any PDF/TXT file to the knowledge base
+- **Chroma vector store**: Local, no external dependencies
+- **MockLLM**: Works without API keys (swap in OpenAI/Anthropic via env var)
+- **Step-by-step reasoning**: See how the agent makes decisions
+
+## 🎯 Example Queries
+
+```
+"Calculate 25 * 4 + 10"              → Uses calculator tool
+"What is the return policy?"          → Retrieves from documents
+"Tell me about Python"                → Direct answer from LLM
+```
+
+## 📦 Project Structure
+
+```
+agentic-rag-assistant/
+├── streamlit_app.py          # Main entry point (Streamlit Cloud compatible)
+├── app/
+│   ├── agent.py             # Core agent loop with tool-calling
+│   ├── llm_client.py        # LLM abstraction (Mock/OpenAI/Anthropic)
+│   ├── retriever.py         # Document ingestion & retrieval (Chroma)
+│   ├── tools.py             # Calculator tool
+│   ├── main.py              # FastAPI backend (optional)
+│   └── __init__.py
+├── data/sample_docs/        # Sample documents for testing
+├── .streamlit/config.toml   # Streamlit configuration
+├── requirements.txt         # Python dependencies
+├── README.md                # This file
+└── tests/                   # Test suite
+
+Optional (not needed for deployment):
+├── .venv/                   # Python virtual environment
+├── ui.py                    # Alternative Streamlit UI (use streamlit_app.py instead)
+```
+
+## 🔧 How It Works
+
+```
+User Query
+    ↓
+Agent Loop (up to max_steps):
+    ├─ Get LLM response
+    ├─ LLM decides: direct answer / calculator / retriever
+    ├─ Execute tool (if needed)
+    ├─ Feed result back to LLM
+    └─ Repeat or return answer
+    ↓
+Display Answer + Reasoning Trace
+```
+
+## 🛠️ Technology Stack
+
+| Component | Technology | Why |
+|-----------|-----------|-----|
+| **LLM** | Mock/OpenAI/Anthropic | Zero-cost demo with option for real LLMs |
+| **Vector DB** | Chroma (local) | No external service needed |
+| **UI** | Streamlit | Simple, interactive, cloud-ready |
+| **API** | FastAPI (optional) | Scalable backend if needed |
+| **Calculator** | AST-based eval | Safe (no arbitrary code execution) |
+
+## 🚀 Deployment
+
+### Streamlit Cloud (Recommended)
+
+1. Create GitHub repo
+2. Push code
+3. Go to share.streamlit.io → "New app"
+4. Select repo, main file: `streamlit_app.py`
+5. Done! Get a public URL
+
+### Local Development
 
 ```bash
-# Terminal 1: Backend API
-uvicorn app.main:app --reload
-
-# Terminal 2: Streamlit UI
-streamlit run ui.py
-
-# Terminal 3 (optional): Test
-curl -X POST http://localhost:8000/query \
-  -H "Content-Type: application/json" \
-  -d '{"query": "What is 5 + 3?"}'
-```
-
-## 🎯 Try It Out
-
-**Examples to test:**
-- Math: *"Calculate 25 * 4 + 10"* → Uses calculator tool
-- Retrieval: *"What is the return policy?"* → Uses document retrieval (if docs ingested)
-- Direct: *"Tell me about Python"* → Answers directly
-
-Watch the **Reasoning Trace** to see how the agent decided which tool to use!
-
-## 🏗️ Architecture
-
-```
-User query
-   │
-   ▼
-AgenticRAGAssistant.run()
-   │
-   ├─► LLM decides: answer directly / call calculator / call retriever
-   │
-   ├─ calculator(expression) ──► safe AST-based eval (no eval())
-   │
-   ├─ retriever(query) ──► Chroma vector store (local, sentence-transformers embeddings)
-   │        └─ ingest_directory(): chunk → embed → store
-   │
-   └─► loop feeds tool result back into the prompt, up to max_steps
-         │
-         ▼
-    final_answer + step-by-step trace
-```
-
-## Why it's built this way
-
-- **MockLLMClient**: the app and full test suite run with zero API keys
-  and zero cost — swap in `OpenAIClient` / `AnthropicClient` (both
-  included) via `LLM_PROVIDER` env var for real generation.
-- **Chroma + sentence-transformers**: fully local vector search, no paid
-  vector DB needed to demo this.
-- **Safe calculator**: AST-based evaluation instead of `eval()` —
-  a deliberate security choice worth mentioning in interviews.
-
-## Run locally
-
-```bash
+# Install deps
 pip install -r requirements.txt
-uvicorn app.main:app --reload
-# in another terminal:
-curl -X POST localhost:8000/ingest -H "Content-Type: application/json" -d '{"directory": "data/sample_docs"}'
-curl -X POST localhost:8000/query -H "Content-Type: application/json" -d '{"query": "What is the return policy?"}'
+
+# Run Streamlit
+streamlit run streamlit_app.py
+
+# Open browser
+http://localhost:8501
 ```
+
+### FastAPI Backend (Optional)
+
+```bash
+# Terminal 1
+uvicorn app.main:app --reload
+# Endpoint: http://localhost:8000
+
+# Terminal 2
+streamlit run ui.py
+```
+
+## 📝 Usage
+
+### Upload Documents
+
+1. Open sidebar → "📚 Upload Documents"
+2. Select PDF/TXT files
+3. Click "Upload & Index"
+4. Ask questions about your documents
+
+### Configure Agent
+
+Sidebar → "⚙️ Agent Settings" → Adjust "Reasoning Steps" (1-10)
+
+### Swap LLM Provider
+
+Set environment variable:
+```bash
+export LLM_PROVIDER=openai  # or anthropic
+export OPENAI_API_KEY=sk-...
+streamlit run streamlit_app.py
+```
+
+Or add secrets in Streamlit Cloud:
+```toml
+# Streamlit Cloud → App Settings → Secrets
+llm_provider = "openai"
+openai_api_key = "sk-..."
+```
+
+## 🧪 Testing
+
+```bash
+pytest tests/
+```
+
+## 📊 Interview Points
+
+- ✅ Agent pattern with tool-calling
+- ✅ Vector search with Chroma
+- ✅ LLM abstraction (Mock/OpenAI/Anthropic)
+- ✅ Safe expression evaluation (AST-based)
+- ✅ Production-ready Streamlit UI
+- ✅ Cloud-deployable on Streamlit Community
+- ✅ Works without API keys (MockLLM)
+
+## 🤝 Contributing
+
+Feel free to add more tools or improve the agent loop!
+
+## 📄 License
+
+MIT
 
 ## Run with Docker
 

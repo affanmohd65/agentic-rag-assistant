@@ -50,12 +50,9 @@ docker-compose up -d
 - **Reasoning Trace**: Explainable AI showing decision process
 
 ### Search Quality
-- **Hybrid Search**: BM25 (keyword) + Vector (semantic) + Reranking
-- **Cross-Encoder Reranking**: Neural ranking for 30% quality improvement
-- **Document Management**: Upload PDF/TXT, auto-chunking with overlap
+- **Multimodal RAG**: Index PDF, TXT, DOCX, PPTX, image, and audio content in one knowledge base
 
 ### Production Features
-- **PostgreSQL Semantic Memory**: Persistent conversation & knowledge base
 - **Redis Query Caching**: <20ms latency for repeated queries
 - **Langfuse Observability**: Free tier tracing and analytics
 - **OpenTelemetry**: Distributed tracing with Jaeger
@@ -213,9 +210,11 @@ docker-compose up -d
 
 1. Open app sidebar
 2. Select "📂 Upload Documents"
-3. Choose PDF/TXT files
+3. Choose PDF, TXT, DOCX, PPTX, PNG/JPG/WEBP, or MP3/WAV/M4A/MP4/WEBM files
 4. Click "Upload & Index"
 5. Start asking questions
+
+Audio is transcribed with Groq Whisper. Images are converted into searchable descriptions using a Groq vision model; image analysis requires a vision-enabled model available in your Groq account.
 
 ### Configure Agent Settings
 
@@ -256,6 +255,9 @@ openai_api_key = "sk-..."
 # LLM Provider (default: mock)
 LLM_PROVIDER=ollama          # ollama, groq, claude, gpt4, mock
 GROQ_API_KEY=your_key        # For Groq (free tier)
+GROQ_MODEL=openai/gpt-oss-20b
+GROQ_AUDIO_MODEL=whisper-large-v3-turbo
+GROQ_VISION_MODEL=meta-llama/llama-4-scout-17b-16e-instruct
 ANTHROPIC_API_KEY=your_key   # For Claude
 OPENAI_API_KEY=your_key      # For GPT-4
 
@@ -275,11 +277,12 @@ LANGFUSE_SECRET_KEY=your_key
 
 In Streamlit Cloud dashboard:
 ```toml
-[secrets]
-groq_api_key = "your_key"
-anthropic_api_key = "your_key"
-openai_api_key = "your_key"
-llm_provider = "groq"
+GROQ_API_KEY = "your_key"
+LLM_PROVIDER = "groq"
+GROQ_MODEL = "openai/gpt-oss-20b"
+GROQ_AUDIO_MODEL = "whisper-large-v3-turbo"
+# Set this only when your Groq account provides access to a vision model.
+GROQ_VISION_MODEL = "meta-llama/llama-4-scout-17b-16e-instruct"
 ```
 
 ## 🔌 API Endpoints (FastAPI)

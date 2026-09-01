@@ -85,10 +85,10 @@ with st.sidebar:
     st.header("📚 Upload Documents")
     
     uploaded_files = st.file_uploader(
-        "Select PDF or TXT files",
-        type=["pdf", "txt"],
+           "Select documents, images, or audio",
+           type=["pdf", "txt", "docx", "pptx", "png", "jpg", "jpeg", "webp", "mp3", "wav", "m4a", "mp4", "webm"],
         accept_multiple_files=True,
-        help="Upload one or more PDF or TXT files"
+           help="Documents are indexed locally. Audio is transcribed and images are described through Groq."
     )
     
     if uploaded_files and st.button("📥 Upload & Index", use_container_width=True):

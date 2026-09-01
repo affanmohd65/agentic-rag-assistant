@@ -64,6 +64,48 @@ def chunk_text(text: str, chunk_size: int = 400, overlap: int = 50) -> list[str]
     return chunks
 
 
+def ingest_file(file_path: str) -> int:
+    """Ingest a single document file. Supports .txt and .pdf files."""
+    collection = _get_collection()
+    count = 0
+    
+    if not os.path.isfile(file_path):
+        return 0
+    
+    fname = os.path.basename(file_path)
+    text = None
+    
+    # Handle text files
+    if fname.endswith(".txt"):
+        try:
+            with open(file_path, "r", encoding="utf-8") as f:
+                text = f.read()
+        except Exception:
+            return 0
+    
+    # Handle PDF files
+    elif fname.endswith(".pdf") and HAS_PDF:
+        try:
+            with open(file_path, "rb") as f:
+                reader = PyPDF2.PdfReader(f)
+                text = ""
+                for page in reader.pages:
+                    text += page.extract_text() + "\n"
+        except Exception:
+            return 0
+    
+    if text and text.strip():
+        for i, chunk in enumerate(chunk_text(text)):
+            collection.add(
+                documents=[chunk],
+                ids=[f"{fname}-{i}"],
+                metadatas=[{"source": fname, "chunk": i}],
+            )
+            count += 1
+    
+    return count
+
+
 def ingest_directory(directory: str) -> int:
     """Ingest documents from a directory. Supports .txt and .pdf files."""
     collection = _get_collection()

@@ -6,11 +6,12 @@ Perfect for Streamlit Community Cloud deployment.
 import streamlit as st
 import json
 import os
+import tempfile
 from pathlib import Path
 
 # Import the agent directly
 from app.agent import AgenticRAGAssistant
-from app.retriever import ingest_directory
+from app.retriever import ingest_file, ingest_directory
 
 # Page configuration
 st.set_page_config(
@@ -73,45 +74,48 @@ An intelligent agent that decides whether to:
 with st.sidebar:
     st.header("⚙️ Configuration")
     
-    st.info("✅ Direct agent mode - No backend server needed!")
-    
     st.divider()
     
     # Document Ingestion
-    st.header("📚 Knowledge Base Setup")
-    st.write("Upload documents to the knowledge base:")
+    st.header("📚 Upload Documents")
     
-    doc_path = st.text_input(
-        "Document Directory Path",
-        value="data/sample_docs",
-        help="Path to directory containing documents to ingest (relative to app root)"
+    uploaded_files = st.file_uploader(
+        "Select PDF or TXT files",
+        type=["pdf", "txt"],
+        accept_multiple_files=True,
+        help="Upload one or more PDF or TXT files"
     )
     
-    if st.button("📥 Ingest Documents", use_container_width=True):
-        if os.path.isdir(doc_path):
-            try:
-                with st.spinner("Ingesting documents..."):
-                    chunks = ingest_directory(doc_path)
-                    if chunks > 0:
-                        st.success(f"✅ Ingested {chunks} document chunks!")
-                        st.session_state.documents_ingested = True
-                    else:
-                        st.info(f"ℹ️ No documents found in {doc_path}. Add .txt or .pdf files to enable retrieval.")
-            except Exception as e:
-                st.error(f"❌ Error ingesting documents: {str(e)}")
-        else:
-            st.error(f"❌ Directory not found: {doc_path}")
+    if uploaded_files and st.button("📥 Upload & Index", use_container_width=True):
+        total_chunks = 0
+        try:
+            with st.spinner("Processing documents..."):
+                for uploaded_file in uploaded_files:
+                    with tempfile.NamedTemporaryFile(delete=False, suffix=os.path.splitext(uploaded_file.name)[1]) as tmp_file:
+                        tmp_file.write(uploaded_file.getbuffer())
+                        tmp_path = tmp_file.name
+                    
+                    chunks = ingest_file(tmp_path)
+                    total_chunks += chunks
+                    os.unlink(tmp_path)
+                
+                if total_chunks > 0:
+                    st.success(f"✅ Indexed {total_chunks} chunks from {len(uploaded_files)} file(s)")
+                    st.session_state.documents_ingested = True
+                else:
+                    st.warning("No content extracted from files")
+        except Exception as e:
+            st.error(f"Error processing files: {str(e)}")
     
     # Agent Configuration
     st.divider()
-    st.header("🧠 Agent Settings")
+    st.header("⚙️ Agent Settings")
     
     max_steps = st.slider(
-        "Max Agent Steps",
+        "Reasoning Steps",
         min_value=1,
         max_value=10,
-        value=3,
-        help="Maximum number of reasoning steps the agent can take"
+        value=3
     )
     
     if max_steps != st.session_state.assistant.max_steps:
@@ -119,21 +123,13 @@ with st.sidebar:
 
 # Main query interface
 st.divider()
-st.header("🎯 Ask the Agent")
-
-st.markdown("""
-**Examples you can try:**
-- "What is 25 * 4 + 10?" *(uses calculator)*
-- "What is the return policy?" *(uses retrieval if docs ingested)*
-- "Tell me about Python" *(direct answer)*
-""")
+st.header("🎯 Query")
 
 # Query input
 query = st.text_area(
-    "Enter your question or calculation:",
-    placeholder="Examples:\n- What is the return policy?\n- Calculate 25 * 4 + 10\n- Tell me about company policies",
-    height=100,
-    help="The agent will decide the best way to answer your question"
+    "Ask a question or request a calculation:",
+    placeholder="Example: What is 25 * 4 + 10?",
+    height=100
 )
 
 # Query execution
@@ -182,12 +178,4 @@ if submit_button:
             import traceback
             st.error(traceback.format_exc())
 
-# Footer
-st.divider()
-st.markdown("""
----
-**Agentic RAG Assistant** | An interview-ready demo of agent-based reasoning with tool-calling
-- 🏗️ Built with FastAPI, Streamlit, Chroma
-- 🧮 Features: Direct answer, calculator, document retrieval
-- 📊 Fully deterministic with MockLLM (no API keys needed)
-""")
+

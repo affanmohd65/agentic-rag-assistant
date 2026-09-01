@@ -67,6 +67,7 @@ services:
       OLLAMA_BASE_URL: "http://ollama:11434"
       JAEGER_HOST: "jaeger"
       JAEGER_PORT: "6831"
+        OTEL_EXPORTER_OTLP_ENDPOINT: "jaeger:4317"
       LANGFUSE_ENABLED: "false"  # Enable with API keys if needed
       LLM_PROVIDER: "ollama"
     ports:

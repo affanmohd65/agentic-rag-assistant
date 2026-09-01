@@ -14,7 +14,7 @@ from langfuse.decorators import langfuse_context, observe
 from opentelemetry import trace, metrics
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
-from opentelemetry.exporter.jaeger.thrift import JaegerExporter
+from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
 from opentelemetry.sdk.metrics import MeterProvider
 from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
 from opentelemetry.exporter.prometheus import PrometheusMetricReader
@@ -43,14 +43,14 @@ else:
 # ===== OpenTelemetry Setup =====
 def init_opentelemetry():
     """Initialize OpenTelemetry tracing and metrics."""
-    # Jaeger exporter for distributed tracing
-    jaeger_exporter = JaegerExporter(
-        agent_host_name=os.getenv("JAEGER_HOST", "localhost"),
-        agent_port=int(os.getenv("JAEGER_PORT", 6831)),
+    # OTLP exporter sends distributed traces to Jaeger or another OTLP collector.
+    otlp_exporter = OTLPSpanExporter(
+        endpoint=os.getenv("OTEL_EXPORTER_OTLP_ENDPOINT", "localhost:4317"),
+        insecure=True,
     )
     
     trace_provider = TracerProvider()
-    trace_provider.add_span_processor(BatchSpanProcessor(jaeger_exporter))
+    trace_provider.add_span_processor(BatchSpanProcessor(otlp_exporter))
     trace.set_tracer_provider(trace_provider)
     
     # Prometheus for metrics
@@ -62,7 +62,7 @@ def init_opentelemetry():
     RequestsInstrumentor().instrument()
     SQLAlchemyInstrumentor().instrument()
     
-    logger.info("OpenTelemetry initialized with Jaeger and Prometheus")
+        logger.info("OpenTelemetry initialized with OTLP tracing and Prometheus")
     return trace.get_tracer(__name__), meter_provider.get_meter(__name__)
 
 

@@ -1,0 +1,40 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: rag-assistant-backend
+    ports:
+      - "8000:8000"
+    environment:
+      - LLM_PROVIDER=mock
+    volumes:
+      - ./data:/app/data
+      - ./models:/app/models
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  ui:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: rag-assistant-ui
+    ports:
+      - "8501:8501"
+    environment:
+      - STREAMLIT_SERVER_PORT=8501
+      - STREAMLIT_SERVER_ADDRESS=0.0.0.0
+      - STREAMLIT_CLIENT_SHOWSTDERRONERROR=false
+    depends_on:
+      backend:
+        condition: service_healthy
+    command: streamlit run ui.py --server.port=8501 --server.address=0.0.0.0 --client.showErrorDetails=false
+    volumes:
+      - ./data:/app/data
+      - ./models:/app/models

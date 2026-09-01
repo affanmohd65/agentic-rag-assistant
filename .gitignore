@@ -1,0 +1,19 @@
+__pycache__/
+*.pyc
+.chroma/
+.pytest_cache/
+.env
+.venv/
+.vscode/
+*.egg-info/
+dist/
+build/
+.idea/
+venv/
+# Streamlit secrets (local only, not for git)
+.streamlit/secrets.toml
+# Streamlit cache
+.streamlit/cache/
+models/
+*.pdf
+.DS_Store
